@@ -12,12 +12,13 @@ module StateMachine::AuditTrail::TransitionAuditing
     state_machine = self
     state_machine.transition_class_name = (options[:to] || default_transition_class_name).to_s
     state_machine.after_transition do |object, transition|
-      state_machine.audit_trail.log(object, transition.event, transition.from, transition.to)
+      args = !transition.args.empty? ? transition.args.first : {}
+      state_machine.audit_trail.log(object, transition.event, transition.from, transition.to, timestamp = Time.now, args)
     end
 
     state_machine.owner_class.after_create do |object|
       if !object.send(state_machine.attribute).nil?
-        state_machine.audit_trail.log(object, nil, nil, object.send(state_machine.attribute))
+        state_machine.audit_trail.log(object, nil, nil, object.send(state_machine.attribute), timestamp = Time.now, :user_id => object.user_id)
       end
     end
   end
